@@ -1,4 +1,4 @@
-package ru.homerep.userservice.dto;
+package streetwalker.userservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

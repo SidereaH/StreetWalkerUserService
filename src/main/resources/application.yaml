@@ -1,6 +1,6 @@
 spring:
   application:
-    name: HomeRepUserService
+    name: StreetWalekrUserService
   datasource:
     url: jdbc:postgresql://localhost:5434/homerep_userservice
     username: "postgres"
@@ -11,6 +11,10 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Europe/Moscow
 server:
   port: 8083
 

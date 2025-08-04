@@ -15,7 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-ENV SPRING_APPLICATION_NAME=HomeRepUserService
+ENV SPRING_APPLICATION_NAME=StreetWalkerUserService
 ENV SERVER_PORT=8083
 
 EXPOSE 8083

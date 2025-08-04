@@ -1,12 +1,10 @@
-package ru.homerep.userservice.services;
+package streetwalker.userservice.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.homerep.userservice.models.Client;
-import ru.homerep.userservice.models.GeoPair;
-import ru.homerep.userservice.repositories.ClientRepository;
+import streetwalker.userservice.repositories.ClientRepository;
 
 import java.util.List;
 

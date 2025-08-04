@@ -1,14 +1,14 @@
-package ru.homerep.userservice.dto;
+package streetwalker.userservice.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import ru.homerep.userservice.models.Client;
-import ru.homerep.userservice.models.Status;
+
 @Getter
 @Setter
+
 public class ClientRequest {
     private Long id;
+    private Long userId;
     private String firstName;
     private String middleName;
     private String lastName;
@@ -19,11 +19,23 @@ public class ClientRequest {
     private Double longtitude;
 
     public Client toClient() {
-        return new Client(id, firstName, middleName, lastName, email, phone, status);
+        return new Client(id, userId, firstName, middleName, lastName, email, phone, status);
     }
 
     public ClientRequest(Long id, String firstName, String middleName, String lastName, String email, String phone, Status status, Double latitude, Double longtitude) {
         this.id = id;
+        this.firstName = firstName;
+        this.middleName = middleName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
+        this.latitude = latitude;
+        this.longtitude = longtitude;
+    }
+    public ClientRequest(Long id,Long userId, String firstName, String middleName, String lastName, String email, String phone, Status status, Double latitude, Double longtitude) {
+        this.id = id;
+        this.userId = userId;
         this.firstName = firstName;
         this.middleName = middleName;
         this.lastName = lastName;

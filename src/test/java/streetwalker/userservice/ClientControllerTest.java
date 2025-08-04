@@ -1,4 +1,4 @@
-package ru.homerep.userservice;
+package streetwalker.userservice;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,13 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import ru.homerep.userservice.controllers.ClientController;
-import ru.homerep.userservice.dto.ClientRequest;
-import ru.homerep.userservice.models.Client;
-import ru.homerep.userservice.services.ClientService;
-import ru.homerep.userservice.models.Status;
+import streetwalker.userservice.controllers.ClientController;
+import streetwalker.userservice.dto.ClientRequest;
+import streetwalker.userservice.services.ClientService;
+
 import java.util.Arrays;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -46,8 +44,8 @@ public class ClientControllerTest {
     @Test
     void testCreateClient() throws Exception {
 
-        Client client = new Client(null, "John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.CLIENT);
-        Client savedClient = new Client(1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.CLIENT);
+        Client client = new Client(null, null,"John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.WATCHER);
+        Client savedClient = new Client(1L,1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.WATCHER);
 
         when(clientService.createClient(any(Client.class))).thenReturn(savedClient);
 
@@ -65,8 +63,8 @@ public class ClientControllerTest {
     @Test
     void testGetAllClients() throws Exception {
 
-        Client client1 = new Client(1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.CLIENT);
-        Client client2 = new Client(2L, "Jane", "Doe", "Smith", "jane.doe@example.com", "987654321",Status.CLIENT);
+        Client client1 = new Client(1L,1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789", Status.WATCHER);
+        Client client2 = new Client(2L, 2L,"Jane", "Doe", "Smith", "jane.doe@example.com", "987654321",Status.WATCHER);
 
         when(clientService.getAllClients()).thenReturn(Arrays.asList(client1, client2));
 
@@ -80,7 +78,7 @@ public class ClientControllerTest {
     @Test
     void testGetClientByIdFound() throws Exception {
 
-        Client client = new Client(1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789",Status.CLIENT);
+        Client client = new Client(1L,1L, "John", "Doe", "Smith", "john.doe@example.com", "123456789",Status.WATCHER);
 
         when(clientService.getClientById(1L)).thenReturn(client);
 
@@ -104,8 +102,8 @@ public class ClientControllerTest {
 
     @Test
     void testUpdateClient() throws Exception {
-        ClientRequest updatedClientRequest = new ClientRequest(1L, "John", "Doe", "Smith",
-                "john.doe@example.com", "123456789", Status.CLIENT, 10.0, 20.0);
+        ClientRequest updatedClientRequest = new ClientRequest(1L, 1L,"John", "Doe", "Smith",
+                "john.doe@example.com", "123456789", Status.WATCHER, 10.0, 20.0);
         Client expectedClient = updatedClientRequest.toClient();
 
         when(clientService.updateClient(eq(1L), any(Client.class))).thenReturn(expectedClient);

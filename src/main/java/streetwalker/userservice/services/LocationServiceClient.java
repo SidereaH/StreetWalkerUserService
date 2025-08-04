@@ -1,20 +1,15 @@
-package ru.homerep.userservice.services;
+package streetwalker.userservice.services;
 
 import com.google.protobuf.ProtocolStringList;
-import locationservice.Location;
-import locationservice.Location.*;
 import locationservice.LocationServiceGrpc;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
-import ru.homerep.userservice.models.GeoPair;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
-
+import locationservice.Location;
+import locationservice.Location.*;
 @Slf4j
 @Service
 public class LocationServiceClient {

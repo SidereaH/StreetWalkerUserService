@@ -1,16 +1,14 @@
-package ru.homerep.userservice.controllers;
+package streetwalker.userservice.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.homerep.userservice.dto.GeoTimeRequest;
-import ru.homerep.userservice.dto.ClientRequest;
-import ru.homerep.userservice.models.Client;
-import ru.homerep.userservice.models.GeoPair;
-import ru.homerep.userservice.services.ClientService;
-import ru.homerep.userservice.services.LocationServiceClient;
+import streetwalker.userservice.dto.GeoTimeRequest;
+import streetwalker.userservice.dto.ClientRequest;
+import streetwalker.userservice.services.ClientService;
+import streetwalker.userservice.services.LocationServiceClient;
 
 import java.util.Arrays;
 import java.util.List;
@@ -109,13 +107,10 @@ public class ClientController {
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<Boolean> getClientStatus(@PathVariable Long id) {
+    public ResponseEntity<String> getClientStatus(@PathVariable Long id) {
         try{
-            clientService.getClientById(id);
-            if(clientService.getClientById(id).isEmployee()){
-                return new ResponseEntity<>(true, HttpStatus.OK);
-            }
-            return new ResponseEntity<>(false, HttpStatus.OK);
+
+            return new ResponseEntity<>(clientService.getClientById(id).getStatus().toString(), HttpStatus.OK);
         }
         catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
