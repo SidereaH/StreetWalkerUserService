@@ -1,7 +1,11 @@
 package streetwalker.userservice.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class UserDTO {
-    private Long streetId;
     private String username;
     private String email;
     private String firstName;

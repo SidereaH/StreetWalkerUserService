@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.OffsetDateTime;
 @Getter
@@ -18,16 +20,19 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long streetId;
+    //глобальное id, которое объединяет инфу в микросервисах
+    @Column(unique = true)
     private String username;
+    @Column(unique = true)
     private String email;
     private String firstName;
     private String lastName;
     private String bio;
     private String avatarUrl;
+    @CreatedDate
     private OffsetDateTime createdAt;
+    @LastModifiedDate
     private OffsetDateTime updatedAt;
-    private OffsetDateTime deletedAt;
     @ManyToOne
     private Role role;
 }
