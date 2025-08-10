@@ -10,4 +10,6 @@ public class UserCreateDTO {
     private String email;
     private String firstName;
     private String lastName;
+    private String bio;
+    private String avatarUrl;
 }
