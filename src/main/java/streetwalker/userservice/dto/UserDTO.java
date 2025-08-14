@@ -12,5 +12,6 @@ public class UserDTO {
     private String lastName;
     private String bio;
     private String avatarUrl;
-
+    private String role;
+    private String status;
 }
