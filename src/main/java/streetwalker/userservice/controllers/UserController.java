@@ -14,40 +14,30 @@ import streetwalker.userservice.dto.UserUpdateDTO;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
+import streetwalker.userservice.services.UserService;
+
+import javax.xml.crypto.Data;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    final UserRepository userRepository;
-    final UserMapper userMapper;
-    public UserController(UserRepository userRepository, UserMapper userMapper) {this.userRepository = userRepository;
-        this.userMapper = userMapper;
+
+    final UserService userService;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
     @GetMapping
     public ResponseEntity<Page<User>> getAllUsers(Pageable pageable) {
         if(pageable != null) {
-            return new ResponseEntity<>(userRepository.findAll(pageable), HttpStatus.OK);
+            return new ResponseEntity<>(userService.findAll(pageable), HttpStatus.OK);
         }
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-    }
-    @GetMapping("/global/{global_id}")
-    public ResponseEntity<User> getUserByGlobal(@PathVariable("global_id") Long globalid) {
-        if (globalid != null ){
-            try{
-                return new ResponseEntity<>(userRepository.findByStreetId(globalid).orElseThrow(() -> new BadRequestException("No such user")), HttpStatus.OK);
-            }
-            catch (BadRequestException e) {
-                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-
     }
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable("id") Long id) {
         if (id != null ){
             try{
-                return new ResponseEntity<>(userRepository.findById(id).orElseThrow(() -> new BadRequestException("No such user")), HttpStatus.OK);
+                return new ResponseEntity<>(userService.findUserById(id).orElseThrow(() -> new BadRequestException("No such user")), HttpStatus.OK);
             }
             catch (BadRequestException e) {
                 return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -58,34 +48,31 @@ public class UserController {
     }
     @PostMapping
     public ResponseEntity<UserDTO>  create(@RequestBody UserCreateDTO userData) {
+        UserDTO user;
         // Преобразование в сущность
-        var user = userMapper.map(userData);
         try{
-            userRepository.save(user);
+            user = userService.create(userData);
 
-        } catch (DataAccessException e){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        } catch (DataAccessException e) {
+            user = new UserDTO();
+            user.setUsername(e.getLocalizedMessage());
+            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
         }
-        // Преобразование в DTO
-        var userDTO = userMapper.map(user);
-        return new ResponseEntity<>(userDTO, HttpStatus.CREATED);
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
+
     }
 
     @PutMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<UserDTO> update(@RequestBody @Validated UserUpdateDTO userData, @PathVariable Long id) {
-        var user = new User();
-        try{
-             user = userRepository.findById(id)
-                    .orElseThrow(() -> new BadRequestException("Not Found"));
+        UserDTO user;
+        try {
+            user = userService.update( userData, id);
+        } catch (BadRequestException e) {
+            var userDTO = new UserDTO();
+            userDTO.setUsername(e.getLocalizedMessage());
+            return new ResponseEntity<>(userDTO, HttpStatus.BAD_REQUEST);
         }
-        catch (BadRequestException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        userMapper.update(userData, user);
-        userRepository.save(user);
-        var userDTO = userMapper.map(user);
-        return new ResponseEntity<>(userDTO, HttpStatus.CREATED);
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 }
