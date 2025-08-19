@@ -5,8 +5,6 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,15 +16,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
 import streetwalker.userservice.models.RefreshToken;
-import streetwalker.userservice.models.dto.*;
+import streetwalker.models.dto.*;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
+import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
 
-import java.util.Date;
 import java.util.Optional;
 @Slf4j
 @Service

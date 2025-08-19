@@ -1,4 +1,4 @@
-package streetwalker.userservice;
+package streetwalker.userservice.mvc;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,30 +6,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import streetwalker.userservice.controllers.SecurityController;
-import streetwalker.userservice.mappers.UserMapper;
-import streetwalker.userservice.models.RefreshToken;
-import streetwalker.userservice.models.Role;
-import streetwalker.userservice.models.Status;
-import streetwalker.userservice.models.User;
-import streetwalker.userservice.models.dto.*;
-import streetwalker.userservice.repositories.RefreshTokenRepository;
-import streetwalker.userservice.repositories.RoleRepository;
-import streetwalker.userservice.repositories.StatusRepository;
-import streetwalker.userservice.repositories.UserRepository;
-import streetwalker.userservice.security.JwtCore;
-import streetwalker.userservice.services.RoleService;
-import streetwalker.userservice.services.StatusService;
+import streetwalker.userservice.models.dto.AuthResponse;
+import streetwalker.userservice.models.dto.SigninRequest;
+import streetwalker.userservice.models.dto.SignupRequest;
+import streetwalker.userservice.models.dto.UserDTO;
 import streetwalker.userservice.services.UserService;
-
-import java.util.Date;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;

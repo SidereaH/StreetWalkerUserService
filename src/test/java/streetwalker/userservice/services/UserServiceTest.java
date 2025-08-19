@@ -1,10 +1,9 @@
-package streetwalker.userservice;
+package streetwalker.userservice.services;
 
 import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.*;
@@ -14,10 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.User;
+import streetwalker.models.dto.*;
 import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
-import streetwalker.userservice.services.*;
 
 import java.util.Date;
 import java.util.Optional;

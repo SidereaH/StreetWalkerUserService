@@ -4,24 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import streetwalker.userservice.models.RefreshToken;
-import streetwalker.userservice.models.dto.*;
-import streetwalker.userservice.models.User;
-import streetwalker.userservice.repositories.RefreshTokenRepository;
-import streetwalker.userservice.repositories.UserRepository;
-import streetwalker.userservice.security.JwtCore;
-import streetwalker.userservice.services.RoleService;
-import streetwalker.userservice.services.StatusService;
+import streetwalker.userservice.models.dto.AuthResponse;
+import streetwalker.userservice.models.dto.SigninRequest;
+import streetwalker.userservice.models.dto.SignupRequest;
+import streetwalker.userservice.models.dto.UserDTO;
 import streetwalker.userservice.services.UserService;
-
-import java.util.Date;
 
 @Slf4j
 @RestController

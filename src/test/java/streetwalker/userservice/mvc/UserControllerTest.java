@@ -1,4 +1,4 @@
-package streetwalker.userservice;
+package streetwalker.userservice.mvc;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +13,7 @@ import streetwalker.userservice.controllers.UserController;
 import streetwalker.userservice.models.Status;
 import streetwalker.userservice.models.dto.UserCreateDTO;
 import streetwalker.userservice.models.dto.UserDTO;
-import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
-import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.services.UserService;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;

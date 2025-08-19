@@ -7,7 +7,6 @@ import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.RefreshTokenRepository;
 import streetwalker.userservice.security.JwtCore;
 
-import java.sql.Ref;
 import java.util.Date;
 
 @Service
