@@ -2,7 +2,7 @@ spring:
   application:
     name: StreetWalekrUserService
   datasource:
-    url: jdbc:postgresql://localhost:5434/homerep_userservice
+    url: jdbc:postgresql://127.0.0.1:5433/streetwalker_auth
     username: "postgres"
     password: "postgres"
     driver-class-name: org.postgresql.Driver
@@ -23,4 +23,6 @@ grpc:
     location-service:
       address: static://localhost:50051
       negotiation-type: plaintext
-
+walker:
+  secret: "yo78$$dontCrackPleaseASdujisdufasbasu"
+  lifetime: 600000
