@@ -17,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import streetwalker.userservice.models.RefreshToken;
-import streetwalker.models.dto.*;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.models.dto.*;

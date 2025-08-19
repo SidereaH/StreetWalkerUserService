@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.User;
-import streetwalker.models.dto.*;
 import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
