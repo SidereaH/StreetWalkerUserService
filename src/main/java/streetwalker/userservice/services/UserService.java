@@ -1,36 +1,52 @@
 package streetwalker.userservice.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import streetwalker.userservice.dto.UserCreateDTO;
-import streetwalker.userservice.dto.UserDTO;
-import streetwalker.userservice.dto.UserUpdateDTO;
+import org.springframework.transaction.annotation.Transactional;
+import streetwalker.userservice.models.dto.SignupRequest;
+import streetwalker.userservice.models.dto.UserCreateDTO;
+import streetwalker.userservice.models.dto.UserDTO;
+import streetwalker.userservice.models.dto.UserUpdateDTO;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
 
 import java.util.Optional;
-
+@Slf4j
 @Service
-public class UserService {
-    final UserRepository userRepository;
-    final UserMapper userMapper;
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+public class UserService implements UserDetailsService {
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
+    private final StatusService statusService;
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, RoleService roleService, StatusService statusService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.roleService = roleService;
+        this.statusService = statusService;
     }
     public Page<User> findAll(Pageable usersPageable) {
             return userRepository.findAll(usersPageable);
     }
-    public Optional<User> findUserById(Long id) {
+    public Optional<User> findUserById(Long id)  {
         return userRepository.findById(id);
     }
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
     public UserDTO create(UserCreateDTO userData) throws DataAccessException {
         var user = userMapper.map(userData);
         userRepository.save(user);
@@ -44,6 +60,30 @@ public class UserService {
         userMapper.update(userData, user);
         userRepository.save(user);
         return userMapper.map(user);
+    }
+    @Transactional
+    public User signUp(SignupRequest request){
+        System.out.println(request);
+        if (userRepository.existsByUsername(request.getUsername())) {
+            log.error("User already exists with username: {}", request.getUsername());
+            throw new RuntimeException("User already exists with username: " + request.getUsername());
+        } else if (userRepository.existsByEmail(request.getEmail())) {
+            log.error("User already exists with email: {}", request.getEmail());
+            throw new RuntimeException("User already exists with email: " + request.getEmail());
+        } else if (userRepository.existsByPhone(request.getPhone())) {
+            log.error("User already exists with phone: {}", request.getPhone());
+            throw new RuntimeException("User already exists with phone: " + request.getPhone());
+        }
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(roleService.getDefaultRole());
+        user.setStatus(statusService.getDefaultStatus());
+        log.info("User created: " + user);
+        userRepository.save(user);
+        return user;
     }
 
 }

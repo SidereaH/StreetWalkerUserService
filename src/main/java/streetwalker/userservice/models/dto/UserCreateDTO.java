@@ -1,13 +1,15 @@
-package streetwalker.userservice.dto;
+package streetwalker.userservice.models.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class UserUpdateDTO {
+public class UserCreateDTO {
     private String username;
+    private String password;
     private String email;
+    private String phone;
     private String firstName;
     private String lastName;
     private String bio;

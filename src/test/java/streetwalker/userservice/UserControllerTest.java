@@ -3,21 +3,21 @@ package streetwalker.userservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import streetwalker.userservice.controllers.UserController;
-import streetwalker.userservice.dto.UserCreateDTO;
-import streetwalker.userservice.dto.UserDTO;
+import streetwalker.userservice.models.Status;
+import streetwalker.userservice.models.dto.UserCreateDTO;
+import streetwalker.userservice.models.dto.UserDTO;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
+import streetwalker.userservice.services.UserService;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 
@@ -36,12 +36,9 @@ class UserControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockitoBean
-    private UserRepository userRepository;
+    private UserService userService;
 
-    @MockitoBean
-    private UserMapper userMapper;
 
     @Test
     void testGetUserById() throws Exception {
@@ -49,8 +46,9 @@ class UserControllerTest {
         user.setId(1L);
         user.setUsername("test");
         user.setEmail("test@test.com");
+        user.setStatus(new Status(0L, "test"));
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userService.findUserById(1L)).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/users/1")
                         .with(csrf())
@@ -69,6 +67,7 @@ class UserControllerTest {
         createDTO.setBio("Test");
 
 
+
         User user = new User();
         user.setId(1L);
         user.setUsername("test");
@@ -76,9 +75,7 @@ class UserControllerTest {
         UserDTO userDTO = new UserDTO();
         userDTO.setUsername("test");
 
-        when(userMapper.map(any(UserCreateDTO.class))).thenReturn(user);
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(userMapper.map(any(User.class))).thenReturn(userDTO);
+        when(userService.create(any(UserCreateDTO.class))).thenReturn(userDTO);
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
