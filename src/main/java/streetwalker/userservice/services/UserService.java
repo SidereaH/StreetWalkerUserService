@@ -46,9 +46,20 @@ public class UserService implements UserDetailsService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
-
-    public UserDTO create(UserCreateDTO userData) throws DataAccessException {
-        var user = userMapper.map(userData);
+    @Transactional
+    public UserDTO create(SignupRequest userData) throws RuntimeException {
+        if (userRepository.existsByUsername(userData.getUsername())) {
+            log.error("User already exists with username: {}", userData.getUsername());
+            throw new RuntimeException("User already exists with username: " + userData.getUsername());
+        } else if (userRepository.existsByEmail(userData.getEmail())) {
+            log.error("User already exists with email: {}", userData.getEmail());
+            throw new RuntimeException("User already exists with email: " + userData.getEmail());
+        } else if (userRepository.existsByPhone(userData.getPhone())) {
+            log.error("User already exists with phone: {}", userData.getPhone());
+            throw new RuntimeException("User already exists with phone: " + userData.getPhone());
+        }
+        userData.setPassword(passwordEncoder.encode(userData.getPassword()));
+        User user = userMapper.map(userData);
         userRepository.save(user);
 
         return userMapper.map(user);
@@ -61,29 +72,29 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         return userMapper.map(user);
     }
-    @Transactional
-    public User signUp(SignupRequest request){
-        System.out.println(request);
-        if (userRepository.existsByUsername(request.getUsername())) {
-            log.error("User already exists with username: {}", request.getUsername());
-            throw new RuntimeException("User already exists with username: " + request.getUsername());
-        } else if (userRepository.existsByEmail(request.getEmail())) {
-            log.error("User already exists with email: {}", request.getEmail());
-            throw new RuntimeException("User already exists with email: " + request.getEmail());
-        } else if (userRepository.existsByPhone(request.getPhone())) {
-            log.error("User already exists with phone: {}", request.getPhone());
-            throw new RuntimeException("User already exists with phone: " + request.getPhone());
-        }
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(roleService.getDefaultRole());
-        user.setStatus(statusService.getDefaultStatus());
-        log.info("User created: " + user);
-        userRepository.save(user);
-        return user;
-    }
+//    @Transactional
+//    public User signUp(SignupRequest request){
+//        System.out.println(request);
+//        if (userRepository.existsByUsername(request.getUsername())) {
+//            log.error("User already exists with username: {}", request.getUsername());
+//            throw new RuntimeException("User already exists with username: " + request.getUsername());
+//        } else if (userRepository.existsByEmail(request.getEmail())) {
+//            log.error("User already exists with email: {}", request.getEmail());
+//            throw new RuntimeException("User already exists with email: " + request.getEmail());
+//        } else if (userRepository.existsByPhone(request.getPhone())) {
+//            log.error("User already exists with phone: {}", request.getPhone());
+//            throw new RuntimeException("User already exists with phone: " + request.getPhone());
+//        }
+//        User user = new User();
+//        user.setUsername(request.getUsername());
+//        user.setEmail(request.getEmail());
+//        user.setPhone(request.getPhone());
+//        user.setPassword(passwordEncoder.encode(request.getPassword()));
+//        user.setRole(roleService.getDefaultRole());
+//        user.setStatus(statusService.getDefaultStatus());
+//        log.info("User created: " + user);
+//        userRepository.save(user);
+//        return user;
+//    }
 
 }

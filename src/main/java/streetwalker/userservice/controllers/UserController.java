@@ -63,7 +63,7 @@ public class UserController {
     public ResponseEntity<UserDTO> update(@RequestBody @Validated UserUpdateDTO userData, @PathVariable Long id) {
         UserDTO user;
         try {
-            user = userService.update( userData, id);
+            user = userService.update(userData, id);
         } catch (BadRequestException e) {
             var userDTO = new UserDTO();
             userDTO.setUsername(e.getLocalizedMessage());

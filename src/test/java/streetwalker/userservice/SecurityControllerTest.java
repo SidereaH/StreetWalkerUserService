@@ -11,11 +11,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import streetwalker.userservice.controllers.SecurityController;
+import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.Role;
 import streetwalker.userservice.models.Status;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.models.dto.SignupRequest;
+import streetwalker.userservice.models.dto.UserCreateDTO;
+import streetwalker.userservice.models.dto.UserDTO;
 import streetwalker.userservice.repositories.RefreshTokenRepository;
 import streetwalker.userservice.repositories.RoleRepository;
 import streetwalker.userservice.repositories.StatusRepository;
@@ -23,6 +26,7 @@ import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
 import streetwalker.userservice.services.RoleService;
 import streetwalker.userservice.services.StatusService;
+import streetwalker.userservice.services.UserService;
 
 import java.util.Date;
 import java.util.Optional;
@@ -61,6 +65,8 @@ class SecurityControllerTest {
 
     @MockitoBean
     private JwtCore jwtCore;
+    @MockitoBean
+    private UserService userService;
 
     @Autowired
     private SecurityController securityController;
@@ -75,22 +81,24 @@ class SecurityControllerTest {
         signupRequest.setPhone("79882578790");
         signupRequest.setPassword("password");
 
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
-        when(roleService.getDefaultRole()).thenReturn(new Role(1L, "USER", "oh yes"));
-        when(statusRepository.findByStatusName("Active")).thenReturn(Optional.of(new Status(1L,"ACTIVE")));
-        User savedUser = new User();
+//        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+//        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+//        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+//        when(roleService.getDefaultRole()).thenReturn(new Role(1L, "USER", "oh yes"));
+//        when(statusRepository.findByStatusName("Active")).thenReturn(Optional.of(new Status(1L,"ACTIVE")));
+        UserDTO savedUser = new UserDTO();
         savedUser.setUsername("testuser");
         savedUser.setEmail("test@example.com");
         savedUser.setPhone("79882578790");
-        savedUser.setPassword("encodedPassword");
-        savedUser.setRole(roleService.getDefaultRole());
-        savedUser.setStatus(statusService.getDefaultStatus());
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+//        savedUser.setPassword("encodedPassword");
+        savedUser.setRole("USER");
+        savedUser.setStatus("Active");
+
+        when(userService.create(any(SignupRequest.class))).thenReturn(savedUser);
+
 
         ResponseEntity<User> response = (ResponseEntity<User>) securityController.signup(signupRequest);
-        System.out.println(response.getBody().getPassword());
+        System.out.println(response.getBody());
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(savedUser, response.getBody());
     }
@@ -101,8 +109,7 @@ class SecurityControllerTest {
         signupRequest.setUsername("existinguser");
         signupRequest.setEmail("test@example.com");
         signupRequest.setPassword("password");
-
-        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
+        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with username: " + signupRequest.getUsername()));
 
         ResponseEntity<?> response = securityController.signup(signupRequest);
         System.out.println("Response: {}" + response);
@@ -116,7 +123,7 @@ class SecurityControllerTest {
         signupRequest.setEmail("test@example.com");
         signupRequest.setPassword("password");
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with email: " + signupRequest.getEmail()));
 
         ResponseEntity<?> response = securityController.signup(signupRequest);
         System.out.println("Response: {}" + response);
@@ -132,7 +139,8 @@ class SecurityControllerTest {
         signupRequest.setPhone("79882578790");
         signupRequest.setPassword("password");
 
-        when(userRepository.existsByPhone("79882578790")).thenReturn(true);
+        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with phone: " + signupRequest.getPhone()));
+
 
         ResponseEntity<?> response = securityController.signup(signupRequest);
         System.out.println("Response: {}" + response);

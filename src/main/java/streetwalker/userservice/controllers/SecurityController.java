@@ -1,7 +1,6 @@
 package streetwalker.userservice.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,9 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import streetwalker.userservice.models.RefreshToken;
-import streetwalker.userservice.models.dto.AuthResponse;
-import streetwalker.userservice.models.dto.SigninRequest;
-import streetwalker.userservice.models.dto.SignupRequest;
+import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.RefreshTokenRepository;
 import streetwalker.userservice.repositories.UserRepository;
@@ -30,50 +27,25 @@ import java.util.Date;
 @RequestMapping("/auth")
 public class SecurityController {
 
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
-    private AuthenticationManager authenticationManager;
-    private JwtCore jwtCore;
-    private RefreshTokenRepository refreshTokenRepository;
-    private RoleService roleService;
-    private StatusService statusService;
-    private UserService userService;
+    private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtCore jwtCore;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserService userService;
 
-    @Autowired
-    public void setStatusService(StatusService statusService) {
-        this.statusService = statusService;
-    }
-    @Autowired
-    public void setRoleService(RoleService roleService) {
-        this.roleService = roleService;
-    }
-    @Autowired
-    public void setRefreshTokenRepository(RefreshTokenRepository refreshTokenRepository) {
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
-    @Autowired
-    public void setUserRepository(UserRepository userRepository) {
+    public SecurityController(UserRepository userRepository, AuthenticationManager authenticationManager, JwtCore jwtCore, RefreshTokenRepository refreshTokenRepository, UserService userService) {
         this.userRepository = userRepository;
-    }
-    @Autowired
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-    @Autowired
-    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
-    }
-    @Autowired
-    public void setJwtCore(JwtCore jwtCore) {
         this.jwtCore = jwtCore;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.userService = userService;
     }
-
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest signupRequest){
-        User user;
+    public ResponseEntity<?> signup(@RequestBody SignupRequest userCreateDTO){
+        UserDTO user;
         try{
-            user = userService.signUp(signupRequest);
+            user = userService.create(userCreateDTO);
         }
         catch (RuntimeException e){
             log.error(e.getMessage());
@@ -164,10 +136,6 @@ public class SecurityController {
         return ResponseEntity.ok("Logged out successfully");
     }
 
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
 
 
     //new pass
