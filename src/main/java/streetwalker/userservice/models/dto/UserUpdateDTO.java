@@ -1,12 +1,16 @@
-package streetwalker.userservice.dto;
+package streetwalker.userservice.models.dto;
 
-public class UserDTO {
-    private Long streetId;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class UserUpdateDTO {
     private String username;
     private String email;
+    private String phone;
     private String firstName;
     private String lastName;
     private String bio;
     private String avatarUrl;
-
 }
