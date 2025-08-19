@@ -3,22 +3,19 @@ package streetwalker.userservice;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import streetwalker.userservice.controllers.SecurityController;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.Role;
 import streetwalker.userservice.models.Status;
 import streetwalker.userservice.models.User;
-import streetwalker.userservice.models.dto.SignupRequest;
-import streetwalker.userservice.models.dto.UserCreateDTO;
-import streetwalker.userservice.models.dto.UserDTO;
+import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.repositories.RefreshTokenRepository;
 import streetwalker.userservice.repositories.RoleRepository;
 import streetwalker.userservice.repositories.StatusRepository;
@@ -35,165 +32,137 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(SecurityController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class SecurityControllerTest {
 
-    @MockitoBean
-    private UserRepository userRepository;
+    @Autowired
+    private MockMvc mockMvc;
 
-
-    @MockitoBean
-    private RoleService roleService;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-
-    @MockitoBean
-    private StatusRepository statusRepository;
-
-    @MockitoBean
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @MockitoBean
-    private PasswordEncoder passwordEncoder;
-
-    @MockitoBean
-    private AuthenticationManager authenticationManager;
-
-    @MockitoBean
-    private JwtCore jwtCore;
     @MockitoBean
     private UserService userService;
 
-    @Autowired
-    private SecurityController securityController;
-    @Autowired
-    private StatusService statusService;
-
+    // ---------- signup ----------
     @Test
-    void testSignup_Success() {
-        SignupRequest signupRequest = new SignupRequest();
-        signupRequest.setUsername("testuser");
-        signupRequest.setEmail("test@example.com");
-        signupRequest.setPhone("79882578790");
-        signupRequest.setPassword("password");
+    void signup_Success() throws Exception {
+        SignupRequest signupRequest = new SignupRequest("testuser", "test@example.com", "79998887766", "password");
 
-//        when(userRepository.existsByUsername("testuser")).thenReturn(false);
-//        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-//        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
-//        when(roleService.getDefaultRole()).thenReturn(new Role(1L, "USER", "oh yes"));
-//        when(statusRepository.findByStatusName("Active")).thenReturn(Optional.of(new Status(1L,"ACTIVE")));
         UserDTO savedUser = new UserDTO();
         savedUser.setUsername("testuser");
         savedUser.setEmail("test@example.com");
-        savedUser.setPhone("79882578790");
-//        savedUser.setPassword("encodedPassword");
+        savedUser.setPhone("79998887766");
         savedUser.setRole("USER");
         savedUser.setStatus("Active");
 
         when(userService.create(any(SignupRequest.class))).thenReturn(savedUser);
 
-
-        ResponseEntity<User> response = (ResponseEntity<User>) securityController.signup(signupRequest);
-        System.out.println(response.getBody());
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(savedUser, response.getBody());
+        mockMvc.perform(post("/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "testuser",
+                                  "email": "test@example.com",
+                                  "phone": "79998887766",
+                                  "password": "password"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").value("testuser"))
+                .andExpect(jsonPath("$.email").value("test@example.com"))
+                .andExpect(jsonPath("$.phone").value("79998887766"))
+                .andExpect(jsonPath("$.role").value("USER"))
+                .andExpect(jsonPath("$.status").value("Active"));
     }
 
     @Test
-    void testSignup_UsernameAlreadyExists() {
-        SignupRequest signupRequest = new SignupRequest();
-        signupRequest.setUsername("existinguser");
-        signupRequest.setEmail("test@example.com");
-        signupRequest.setPassword("password");
-        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with username: " + signupRequest.getUsername()));
+    void signup_Failure() throws Exception {
+        when(userService.create(any(SignupRequest.class)))
+                .thenThrow(new RuntimeException("User already exists with username: testuser"));
 
-        ResponseEntity<?> response = securityController.signup(signupRequest);
-        System.out.println("Response: {}" + response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("User already exists with username: existinguser", response.getBody());
-    }
-    @Test
-    void testSignup_EmailAlreadyExists() {
-        SignupRequest signupRequest = new SignupRequest();
-        signupRequest.setUsername("existinguser");
-        signupRequest.setEmail("test@example.com");
-        signupRequest.setPassword("password");
-
-        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with email: " + signupRequest.getEmail()));
-
-        ResponseEntity<?> response = securityController.signup(signupRequest);
-        System.out.println("Response: {}" + response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("User already exists with email: test@example.com", response.getBody());
+        mockMvc.perform(post("/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"testuser","email":"test@example.com","phone":"79998887766","password":"password"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User already exists with username: testuser"));
     }
 
+    // ---------- signin ----------
     @Test
-    void testSignup_PhoneAlreadyExists() {
-        SignupRequest signupRequest = new SignupRequest();
-        signupRequest.setUsername("existinguser");
-        signupRequest.setEmail("test@example.com");
-        signupRequest.setPhone("79882578790");
-        signupRequest.setPassword("password");
+    void signin_Success() throws Exception {
+        AuthResponse authResponse = new AuthResponse("jwt-token", "refresh-token");
+        when(userService.signin(any(SigninRequest.class))).thenReturn(authResponse);
 
-        when(userService.create(any(SignupRequest.class))).thenThrow(new RuntimeException("User already exists with phone: " + signupRequest.getPhone()));
-
-
-        ResponseEntity<?> response = securityController.signup(signupRequest);
-        System.out.println("Response: {}" + response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("User already exists with phone: 79882578790", response.getBody());
+        mockMvc.perform(post("/auth/signin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"phone":"79998887766","password":"password"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("jwt-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
     @Test
-    void testRefreshToken_InvalidToken() {
-        String refreshToken = "invalid-token";
-        when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.empty());
+    void signin_Failure() throws Exception {
+        when(userService.signin(any(SigninRequest.class))).thenThrow(new RuntimeException("Invalid credentials"));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            securityController.refreshToken(refreshToken);
-        });
-        assertEquals("Invalid refresh token", exception.getMessage());
+        mockMvc.perform(post("/auth/signin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"phone":"79998887766","password":"wrong"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Invalid credentials"));
+    }
 
-        verify(userRepository, never()).findByUsername(any());
-        verify(jwtCore, never()).generateToken(any(Authentication.class));
+    // ---------- refresh ----------
+    @Test
+    void refresh_Success() throws Exception {
+        AuthResponse authResponse = new AuthResponse("new-jwt", "new-refresh");
+        when(userService.refresh("valid-token")).thenReturn(authResponse);
+
+        mockMvc.perform(post("/auth/refresh")
+                        .param("refreshToken", "valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-jwt"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh"));
     }
 
     @Test
-    void testRefreshToken_ExpiredToken() {
-        String refreshToken = "expired-token";
-        RefreshToken storedToken = new RefreshToken();
-        storedToken.setToken(refreshToken);
-        storedToken.setUsername("testuser");
-        storedToken.setExpiryDate(new Date(System.currentTimeMillis() - 1000));
+    void refresh_Failure() throws Exception {
+        when(userService.refresh("bad-token")).thenThrow(new RuntimeException("Invalid refresh token"));
 
-        when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.of(storedToken));
+        mockMvc.perform(post("/auth/refresh")
+                        .param("refreshToken", "bad-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Invalid refresh token"));
+    }
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            securityController.refreshToken(refreshToken);
-        });
-        assertEquals("Refresh token expired", exception.getMessage());
+    // ---------- logout ----------
+    @Test
+    void logout_Success() throws Exception {
+        mockMvc.perform(post("/auth/logout")
+                        .param("refreshToken", "valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Logged out successfully"));
 
-        verify(refreshTokenRepository, times(1)).delete(storedToken);
+        verify(userService).logout("valid-token");
     }
 
     @Test
-    void testRefreshToken_UserNotFound() {
-        String refreshToken = "valid-refresh-token";
-        RefreshToken storedToken = new RefreshToken();
-        storedToken.setToken(refreshToken);
-        storedToken.setUsername("testuser");
-        storedToken.setExpiryDate(new Date(System.currentTimeMillis() + 100000));
+    void logout_Failure() throws Exception {
+        doThrow(new DataAccessException("DB error") {})
+                .when(userService).logout("bad-token");
 
-        when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.of(storedToken));
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.empty());
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            securityController.refreshToken(refreshToken);
-        });
-        assertEquals("User not found exception", exception.getMessage());
+        mockMvc.perform(post("/auth/logout")
+                        .param("refreshToken", "bad-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("DB error"));
     }
 }
+

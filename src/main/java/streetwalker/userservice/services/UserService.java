@@ -5,20 +5,28 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import streetwalker.userservice.models.dto.SignupRequest;
-import streetwalker.userservice.models.dto.UserCreateDTO;
-import streetwalker.userservice.models.dto.UserDTO;
-import streetwalker.userservice.models.dto.UserUpdateDTO;
+import org.springframework.web.bind.annotation.RequestParam;
+import streetwalker.userservice.models.RefreshToken;
+import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
+import streetwalker.userservice.security.JwtCore;
 
+import java.util.Date;
 import java.util.Optional;
 @Slf4j
 @Service
@@ -28,12 +36,18 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
     private final StatusService statusService;
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, RoleService roleService, StatusService statusService) {
+    private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
+    private final JwtCore jwtCore;
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, RoleService roleService, StatusService statusService, AuthenticationManager authenticationManager, RefreshTokenService refreshTokenService, JwtCore jwtCore) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.statusService = statusService;
+        this.authenticationManager = authenticationManager;
+        this.refreshTokenService = refreshTokenService;
+        this.jwtCore = jwtCore;
     }
     public Page<User> findAll(Pageable usersPageable) {
             return userRepository.findAll(usersPageable);
@@ -96,5 +110,39 @@ public class UserService implements UserDetailsService {
 //        userRepository.save(user);
 //        return user;
 //    }
+
+    public AuthResponse signin (SigninRequest signinRequest) throws RuntimeException, BadCredentialsException{
+        User user = userRepository.findByPhone(signinRequest.getPhone()).orElseThrow(()  -> new RuntimeException("User not found exception"));
+
+
+        Authentication authentication = null;
+        try {
+            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), signinRequest.getPassword()));
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("Invalid username or password");
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtCore.generateToken(authentication);
+        RefreshToken refresh = refreshTokenService.create(user);
+
+        return new AuthResponse(jwt, refresh.getToken());
+    }
+    public AuthResponse refresh(String refreshToken) throws RuntimeException {
+        String username = refreshTokenService.check(refreshToken);
+
+        // Генерируем новый access token
+        log.info("Extracted username from token: {}", username);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found exception"));;
+
+        String newAccessToken = jwtCore.generateToken(user);
+        String newRefreshToken = refreshTokenService.create(user).getToken();
+        return new AuthResponse(newAccessToken, newRefreshToken);
+    }
+    public void logout( String refreshToken) throws DataAccessException {
+        refreshTokenService.delete(refreshToken);
+    }
+
 
 }
