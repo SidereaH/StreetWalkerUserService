@@ -139,6 +139,12 @@ public class UserService implements UserDetailsService {
     public void logout( String refreshToken) throws DataAccessException {
         refreshTokenService.delete(refreshToken);
     }
+    public Page<User> findAllByUsernameSub(Pageable pageable, String username) throws RuntimeException {
+        Page<User> users = userRepository.findUserByUsernameContainingIgnoreCase(pageable,username);
+        if (users.isEmpty()) throw new RuntimeException("User not found exception");
+        return users;
+    }
+
 
 
 }

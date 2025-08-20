@@ -58,7 +58,7 @@ public class UserController {
 
     }
 
-    @PutMapping("/posts/{id}")
+    @PutMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<UserDTO> update(@RequestBody @Validated UserUpdateDTO userData, @PathVariable Long id) {
         UserDTO user;
@@ -70,5 +70,18 @@ public class UserController {
             return new ResponseEntity<>(userDTO, HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(user, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/search/username")
+    public ResponseEntity<?> searchUsersByUsername(Pageable pageable, @RequestParam String username) {
+        Page<User> users;
+        try{
+             users = userService.findAllByUsernameSub(pageable, username);
+        }
+        catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(users, HttpStatus.OK);
+
     }
 }
