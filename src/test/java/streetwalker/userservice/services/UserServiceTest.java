@@ -4,8 +4,7 @@ import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,6 +17,7 @@ import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -207,5 +207,30 @@ class UserServiceTest {
     void logout_shouldCallDelete() {
         userService.logout("r");
         verify(refreshTokenService).delete("r");
+    }
+    // ======================= findAllByUsernameSub =======================
+    @Test
+    void findAllByUsernameSub_shouldThrow_whenNotFound() {
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("username").ascending());
+        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "t")).thenReturn(null);
+        assertThrows(RuntimeException.class, () -> userService.findAllByUsernameSub(pageable, "t"));
+    }
+    @Test
+    void findAllByUsernameSub_shouldReturnPage_whenFound() {
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("username").ascending());
+        User user1 = new User();
+        user1.setUsername("AliceWonder");
+        user1.setEmail("alice@test.com");
+        userRepository.save(user1);
+
+
+        User user3 = new User();
+        user3.setUsername("AnotherALICE");
+        user3.setEmail("alice2@test.com");
+        userRepository.save(user3);
+        Page<User> page = new PageImpl<>(List.of(user1, user3));
+        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "alice")).thenReturn(page);
+        assertEquals(page, userService.findAllByUsernameSub(pageable, "alice"));
+
     }
 }
