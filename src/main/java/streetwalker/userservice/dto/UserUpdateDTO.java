@@ -11,6 +11,6 @@ public class UserUpdateDTO {
     private String phone;
     private String firstName;
     private String lastName;
-    private String bio;
+    private String description;
     private String avatarUrl;
 }

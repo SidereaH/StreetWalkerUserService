@@ -15,7 +15,7 @@ import streetwalker.userservice.models.User;
 )
 public interface UserMapper {
 
-    @Mapping(target = "bio", defaultValue = " ")
+    @Mapping(target = "description", defaultValue = " ")
     @Mapping(target = "avatarUrl", defaultValue = "https://cdn.lifehacker.ru/wp-content/uploads/2018/04/vk_1610723985.jpg")
     User map(UserCreateDTO dto);
     User map(SignupRequest dto);

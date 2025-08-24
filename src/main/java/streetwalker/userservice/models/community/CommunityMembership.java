@@ -16,8 +16,6 @@ public class CommunityMembership {
     @ManyToOne
     private User user;
 
-    @ManyToOne
-    private CommunityProfile community;
 
     @ManyToOne
     private CommunityRole role;

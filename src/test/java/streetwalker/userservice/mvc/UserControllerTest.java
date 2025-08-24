@@ -68,7 +68,7 @@ class UserControllerTest {
         createDTO.setEmail("test@example.com");
         createDTO.setFirstName("Test");
         createDTO.setLastName("Test");
-        createDTO.setBio("Test");
+        createDTO.setDescription("Test");
 
 
 

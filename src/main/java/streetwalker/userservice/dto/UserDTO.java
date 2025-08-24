@@ -11,7 +11,7 @@ public class UserDTO{
     private String phone;
     private String firstName;
     private String lastName;
-    private String bio;
+    private String description;
     private String avatarUrl;
     private String role;
     private String status;
