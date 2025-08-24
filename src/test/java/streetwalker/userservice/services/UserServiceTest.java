@@ -9,10 +9,10 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import streetwalker.userservice.dto.*;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.User;
-import streetwalker.userservice.models.dto.*;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
 

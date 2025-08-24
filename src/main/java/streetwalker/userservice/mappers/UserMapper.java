@@ -1,10 +1,10 @@
 package streetwalker.userservice.mappers;
 
 import org.mapstruct.*;
-import streetwalker.userservice.models.dto.SignupRequest;
-import streetwalker.userservice.models.dto.UserCreateDTO;
-import streetwalker.userservice.models.dto.UserDTO;
-import streetwalker.userservice.models.dto.UserUpdateDTO;
+import streetwalker.userservice.dto.SignupRequest;
+import streetwalker.userservice.dto.UserCreateDTO;
+import streetwalker.userservice.dto.UserDTO;
+import streetwalker.userservice.dto.UserUpdateDTO;
 import streetwalker.userservice.models.User;
 
 @Mapper(

@@ -1,4 +1,4 @@
-package streetwalker.userservice.models.dto;
+package streetwalker.userservice.dto;
 
 import lombok.*;
 

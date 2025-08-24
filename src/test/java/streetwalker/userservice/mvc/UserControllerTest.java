@@ -13,8 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import streetwalker.userservice.controllers.UserController;
 import streetwalker.userservice.models.Role;
 import streetwalker.userservice.models.Status;
-import streetwalker.userservice.models.dto.UserCreateDTO;
-import streetwalker.userservice.models.dto.UserDTO;
+import streetwalker.userservice.dto.UserCreateDTO;
+import streetwalker.userservice.dto.UserDTO;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.services.UserService;
 

@@ -8,9 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import streetwalker.userservice.models.dto.UserCreateDTO;
-import streetwalker.userservice.models.dto.UserDTO;
-import streetwalker.userservice.models.dto.UserUpdateDTO;
+import streetwalker.userservice.dto.UserCreateDTO;
+import streetwalker.userservice.dto.UserDTO;
+import streetwalker.userservice.dto.UserUpdateDTO;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.services.UserService;
 

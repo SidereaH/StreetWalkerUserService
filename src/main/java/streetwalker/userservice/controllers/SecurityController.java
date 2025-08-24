@@ -5,10 +5,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import streetwalker.userservice.models.dto.AuthResponse;
-import streetwalker.userservice.models.dto.SigninRequest;
-import streetwalker.userservice.models.dto.SignupRequest;
-import streetwalker.userservice.models.dto.UserDTO;
+import streetwalker.userservice.dto.AuthResponse;
+import streetwalker.userservice.dto.SigninRequest;
+import streetwalker.userservice.dto.SignupRequest;
+import streetwalker.userservice.dto.UserDTO;
 import streetwalker.userservice.services.UserService;
 
 @Slf4j

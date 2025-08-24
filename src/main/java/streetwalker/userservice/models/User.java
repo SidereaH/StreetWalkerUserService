@@ -27,13 +27,14 @@ import java.util.Objects;
 @NoArgsConstructor
 @Entity
 @Table(name = "street_users")
-public class User implements UserDetails {
+@PrimaryKeyJoinColumn(name = "profile_id")
+public class User extends Profile implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    /**Глобальный юзернейм - аналог юз в тг*/
-    @Column(unique = true)
-    private String username;
+//    /**Глобальный юзернейм - аналог юз в тг*/
+//    @Column(unique = true)
+//    private String username;
     private  String password;
     @Column(unique = true)
     /**Почта для контакта*/
@@ -45,11 +46,11 @@ public class User implements UserDetails {
     /**Хранение описания профиля, заданного пользователем*/
     private String bio;
     /**Ссылка на s3 хранилище с аватарочкой*/
-    private String avatarUrl;
-    @CreatedDate
-    private OffsetDateTime createdAt;
-    @LastModifiedDate
-    private OffsetDateTime updatedAt;
+//    private String avatarUrl;
+//    @CreatedDate
+//    private OffsetDateTime createdAt;
+//    @LastModifiedDate
+//    private OffsetDateTime updatedAt;
     /**Роль пользователя под вопросом, скорее нужно обращаться к серверу авторизации, там искать роль*/
     @ManyToOne
     private Role role;
@@ -87,16 +88,16 @@ public class User implements UserDetails {
     public String toString() {
         return "User{" +
                 "id=" + id +
-                ", username='" + username + '\'' +
+                ", username='" + super.getUsername() + '\'' +
                 ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", bio='" + bio + '\'' +
-                ", avatarUrl='" + avatarUrl + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
+                ", avatarUrl='" + super.getAvatarUrl() + '\'' +
+                ", createdAt=" + super.getCreatedAt() +
+                ", updatedAt=" + super.getUpdatedAt() +
                 ", role=" + role +
                 ", status=" + status +
                 '}';
@@ -107,11 +108,16 @@ public class User implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(password, user.password) && Objects.equals(email, user.email) && Objects.equals(phone, user.phone) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(bio, user.bio) && Objects.equals(avatarUrl, user.avatarUrl) && Objects.equals(createdAt, user.createdAt) && Objects.equals(updatedAt, user.updatedAt) && Objects.equals(role, user.role) && Objects.equals(status, user.status);
+        return Objects.equals(id, user.id) && Objects.equals(this.getUsername(), user.getUsername()) && Objects.equals(password, user.password) && Objects.equals(email, user.email) && Objects.equals(phone, user.phone) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(bio, user.bio) && Objects.equals(this.getAvatarUrl(), user.getAvatarUrl()) && Objects.equals(this.getCreatedAt(), user.getCreatedAt()) && Objects.equals(this.getUpdatedAt(), user.getUpdatedAt()) && Objects.equals(role, user.role) && Objects.equals(status, user.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, password, email, phone, firstName, lastName, bio, avatarUrl, createdAt, updatedAt, role, status);
+        return Objects.hash(id, this.getUsername(), password, email, phone, firstName, lastName, bio, this.getUsername(), this.getCreatedAt(), this.getUpdatedAt(), role, status);
+    }
+
+    @Override
+    public ProfileType getType() {
+        return ProfileType.USER;
     }
 }
