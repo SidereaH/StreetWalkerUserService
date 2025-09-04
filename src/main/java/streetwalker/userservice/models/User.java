@@ -29,9 +29,7 @@ import java.util.Objects;
 @Table(name = "street_users")
 @PrimaryKeyJoinColumn(name = "profile_id")
 public class User extends Profile implements UserDetails {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 //    /**Глобальный юзернейм - аналог юз в тг*/
 //    @Column(unique = true)
 //    private String username;
@@ -51,7 +49,6 @@ public class User extends Profile implements UserDetails {
 //    private OffsetDateTime createdAt;
 //    @LastModifiedDate
 //    private OffsetDateTime updatedAt;
-    /**Роль пользователя под вопросом, скорее нужно обращаться к серверу авторизации, там искать роль*/
     @ManyToOne
     private Role role;
     /**Статус пользователя, может быть заблокирован, активен и тд*/
