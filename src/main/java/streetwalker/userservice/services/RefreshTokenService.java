@@ -41,4 +41,7 @@ public class RefreshTokenService {
             refreshTokenRepository.deleteByUsername(jwtCore.getUserNameFromJwt(refreshToken));
         }
     }
+    public String getUsernameFromToken(String token) {
+        return jwtCore.getUserNameFromJwt(token);
+    }
 }

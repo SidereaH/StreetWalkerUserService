@@ -84,8 +84,8 @@ public class User extends Profile implements UserDetails {
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
-                ", username='" + super.getUsername() + '\'' +
+                "id=" + this.getId() +
+                ", username='" + this.getUsername() + '\'' +
                 ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
@@ -105,12 +105,12 @@ public class User extends Profile implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(this.getUsername(), user.getUsername()) && Objects.equals(password, user.password) && Objects.equals(email, user.email) && Objects.equals(phone, user.phone) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(this.getDescription(), user.getDescription()) && Objects.equals(this.getAvatarUrl(), user.getAvatarUrl()) && Objects.equals(this.getCreatedAt(), user.getCreatedAt()) && Objects.equals(this.getUpdatedAt(), user.getUpdatedAt()) && Objects.equals(role, user.role) && Objects.equals(status, user.status);
+        return Objects.equals(this.getId(), user.getId()) && Objects.equals(this.getUsername(), user.getUsername()) && Objects.equals(password, user.password) && Objects.equals(email, user.email) && Objects.equals(phone, user.phone) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(this.getDescription(), user.getDescription()) && Objects.equals(this.getAvatarUrl(), user.getAvatarUrl()) && Objects.equals(this.getCreatedAt(), user.getCreatedAt()) && Objects.equals(this.getUpdatedAt(), user.getUpdatedAt()) && Objects.equals(role, user.role) && Objects.equals(status, user.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, this.getUsername(), password, email, phone, firstName, lastName, this.getDescription(), this.getUsername(), this.getCreatedAt(), this.getUpdatedAt(), role, status);
+        return Objects.hash(this.getId(), this.getUsername(), password, email, phone, firstName, lastName, this.getDescription(), this.getUsername(), this.getCreatedAt(), this.getUpdatedAt(), role, status);
     }
 
     @Override
