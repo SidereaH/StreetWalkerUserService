@@ -15,10 +15,13 @@ import streetwalker.userservice.models.RefreshToken;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
+import streetwalker.userservice.services.security.UserActivityLogService;
+import streetwalker.userservice.services.util.RequestContextHelper;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,9 +36,9 @@ class UserServiceTest {
     @Mock private AuthenticationManager authenticationManager;
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private JwtCore jwtCore;
-
+    @Mock private UserActivityLogService activityLogService;
     @InjectMocks private UserService userService;
-
+    @Mock private RequestContextHelper requestContextHelper;
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -122,11 +125,19 @@ class UserServiceTest {
     @Test
     void update_shouldUpdateUser_whenExists() throws Exception {
         UserUpdateDTO dto = new UserUpdateDTO();
+        dto.setEmail("new email");
         User user = new User();
+        user.setId(1L);
+        user.setUsername("siderea");
+        user.setEmail("mail");
+        user.setPhone("79882578790");
         UserDTO mapped = new UserDTO();
-
+        mapped.setEmail("new email");
+        mapped.setPhone("79882578790");
+        mapped.setUsername("siderea");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userMapper.map(user)).thenReturn(mapped);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userMapper.map(any(User.class))).thenReturn(mapped);
 
         UserDTO result = userService.update(dto, 1L);
 
@@ -147,18 +158,30 @@ class UserServiceTest {
     @Test
     void signin_shouldReturnTokens_whenValid() {
         SigninRequest req = new SigninRequest("123","pwd");
-        User user = new User(); user.setUsername("u");
+        User user = new User();
+        user.setUsername("u");
+        user.setId(1L);
+
         Authentication auth = mock(Authentication.class);
-        RefreshToken refresh = new RefreshToken(); refresh.setToken("refresh");
+        RefreshToken refresh = new RefreshToken();
+        refresh.setToken("refresh");
+
         when(userRepository.findByPhone("123")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any())).thenReturn(auth);
         when(jwtCore.generateToken(auth)).thenReturn("jwt");
         when(refreshTokenService.create(user)).thenReturn(refresh);
 
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
         AuthResponse res = userService.signin(req);
 
         assertEquals("jwt", res.getAccessToken());
         assertEquals("refresh", res.getRefreshToken());
+
+        // Verify activity logging was called
+        verify(activityLogService).logLoginSuccess(eq(user), any(UUID.class));
     }
 
     @Test
@@ -166,13 +189,22 @@ class UserServiceTest {
         SigninRequest req = new SigninRequest("123","pwd");
         when(userRepository.findByPhone("123")).thenReturn(Optional.empty());
 
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
         assertThrows(RuntimeException.class, () -> userService.signin(req));
+
+        // Verify activity logging was called for failure
+        verify(activityLogService).logLoginFailure(eq("Phone: 123"), eq("192.168.1.1"), eq("TestAgent"), any(), any());
     }
 
     @Test
     void signin_shouldThrow_whenBadCredentials() {
         SigninRequest req = new SigninRequest("123","pwd");
         User user = new User(); user.setUsername("u");
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
         when(userRepository.findByPhone("123")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("bad"));
 
@@ -182,16 +214,26 @@ class UserServiceTest {
     // ===================== refresh =====================
     @Test
     void refresh_shouldReturnNewTokens_whenValid() {
-        User user = new User(); user.setUsername("u");
+        User user = new User();
+        user.setUsername("u");
+        user.setId(1L);
+
         when(refreshTokenService.check("r")).thenReturn("u");
         when(userRepository.findByUsername("u")).thenReturn(Optional.of(user));
         when(jwtCore.generateToken(user)).thenReturn("newJwt");
         when(refreshTokenService.create(user)).thenReturn(new RefreshToken(0L, "refreshNew", "test_token", new Date()));
 
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
         AuthResponse res = userService.refresh("r");
 
         assertEquals("newJwt", res.getAccessToken());
         assertEquals("test_token", res.getRefreshToken());
+
+        // Verify activity logging was called
+        verify(activityLogService).logUserActivity(any(), any(), eq(user), eq(true), any(), any(), any(), any(), any(), any(), any(), any(), eq("192.168.1.1"), eq("TestAgent"));
     }
 
     @Test
@@ -199,38 +241,75 @@ class UserServiceTest {
         when(refreshTokenService.check("r")).thenReturn("u");
         when(userRepository.findByUsername("u")).thenReturn(Optional.empty());
 
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
         assertThrows(RuntimeException.class, () -> userService.refresh("r"));
+
+        // Verify activity logging was called for failure
+        verify(activityLogService).logUserActivity(any(), any(), isNull(), eq(false), any(), any(), any(), any(), any(), any(), any(), any(), eq("192.168.1.1"), eq("TestAgent"));
     }
 
     // ===================== logout =====================
     @Test
     void logout_shouldCallDelete() {
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+        when(refreshTokenService.getUsernameFromToken("r")).thenReturn("testuser");
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
         userService.logout("r");
+
         verify(refreshTokenService).delete("r");
+        verify(activityLogService).logUserActivity(any(), any(), eq(user), eq(true), any(), any(), any(), any(), any(), any(), any(), any(), eq("192.168.1.1"), eq("TestAgent"));
     }
     // ======================= findAllByUsernameSub =======================
-    @Test
-    void findAllByUsernameSub_shouldThrow_whenNotFound() {
-        Pageable pageable = PageRequest.of(0, 2, Sort.by("username").ascending());
-        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "t")).thenReturn(null);
-        assertThrows(RuntimeException.class, () -> userService.findAllByUsernameSub(pageable, "t"));
-    }
+
     @Test
     void findAllByUsernameSub_shouldReturnPage_whenFound() {
         Pageable pageable = PageRequest.of(0, 2, Sort.by("username").ascending());
         User user1 = new User();
         user1.setUsername("AliceWonder");
         user1.setEmail("alice@test.com");
-        userRepository.save(user1);
-
 
         User user3 = new User();
         user3.setUsername("AnotherALICE");
         user3.setEmail("alice2@test.com");
-        userRepository.save(user3);
-        Page<User> page = new PageImpl<>(List.of(user1, user3));
-        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "alice")).thenReturn(page);
-        assertEquals(page, userService.findAllByUsernameSub(pageable, "alice"));
 
+        Page<User> page = new PageImpl<>(List.of(user1, user3));
+
+        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "alice")).thenReturn(page);
+
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
+        Page<User> result = userService.findAllByUsernameSub(pageable, "alice");
+
+        assertEquals(page, result);
+        verify(activityLogService).logUserActivity(any(), any(), isNull(), eq(true), any(), any(), any(), any(), any(), any(), any(), any(), eq("192.168.1.1"), eq("TestAgent"));
+    }
+
+    @Test
+    void findAllByUsernameSub_shouldThrow_whenNotFound() {
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("username").ascending());
+        Page<User> emptyPage = new PageImpl<>(List.of());
+
+        when(userRepository.findUserByUsernameContainingIgnoreCase(pageable, "t")).thenReturn(emptyPage);
+
+        // Mock the RequestContextHelper methods
+        when(requestContextHelper.getCurrentRequestIpAddress()).thenReturn("192.168.1.1");
+        when(requestContextHelper.getCurrentRequestUserAgent()).thenReturn("TestAgent");
+
+        assertThrows(RuntimeException.class, () -> userService.findAllByUsernameSub(pageable, "t"));
+
+        // Verify activity logging was called for failure
+        verify(activityLogService).logUserActivity(any(), any(), isNull(), eq(false), any(), any(), any(), any(), any(), any(), any(), any(), eq("192.168.1.1"), eq("TestAgent"));
     }
 }

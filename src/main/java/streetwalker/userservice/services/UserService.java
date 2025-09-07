@@ -26,6 +26,7 @@ import streetwalker.userservice.security.JwtCore;
 import streetwalker.userservice.services.security.UserActivityLogService;
 import streetwalker.userservice.services.util.RequestContextHelper;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -137,16 +138,16 @@ public class UserService implements UserDetailsService {
         // Формируем JSON с измененными полями
         StringBuilder details = new StringBuilder("{");
         boolean first = true;
-        if (!oldEmail.equals(updatedUser.getEmail())) {
+        if (!Objects.equals(oldEmail, user.getEmail())) {
             details.append("\"oldEmail\": \"").append(oldEmail).append("\", \"newEmail\": \"").append(updatedUser.getEmail()).append("\"");
             first = false;
         }
-        if (!oldPhone.equals(updatedUser.getPhone())) {
+        if (!Objects.equals(oldPhone, updatedUser.getPhone())) {
             if (!first) details.append(", ");
             details.append("\"oldPhone\": \"").append(oldPhone).append("\", \"newPhone\": \"").append(updatedUser.getPhone()).append("\"");
             first = false;
         }
-        if (!oldUsername.equals(updatedUser.getUsername())) {
+        if (!Objects.equals(oldUsername, updatedUser.getUsername())) {
             if (!first) details.append(", ");
             details.append("\"oldUsername\": \"").append(oldUsername).append("\", \"newUsername\": \"").append(updatedUser.getUsername()).append("\"");
             first = false;
