@@ -26,10 +26,8 @@ import streetwalker.userservice.security.JwtCore;
 import streetwalker.userservice.services.security.UserActivityLogService;
 import streetwalker.userservice.services.util.RequestContextHelper;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -394,4 +392,275 @@ public class UserService implements UserDetailsService {
             userRepository.save(user);
         }
     }
+
+    /**
+     * Добавить пользователя в друзья
+     */
+    @Transactional
+    public void addFriend(Long userId, Long friendId) {
+        UUID requestId = UUID.randomUUID();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Friend not found with id: " + friendId));
+
+        if (user.equals(friend)) {
+            throw new RuntimeException("Cannot add yourself as a friend");
+        }
+
+        if (user.isFriend(friend)) {
+            throw new RuntimeException("Users are already friends");
+        }
+
+        user.addFriend(friend);
+        userRepository.save(user);
+        userRepository.save(friend);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.ADD_FRIEND,
+                "Add Friend",
+                user,
+                true,
+                "User " + user.getUsername() + " added " + friend.getUsername() + " as friend",
+                null,
+                "{\"friendId\": " + friendId + ", \"friendUsername\": \"" + friend.getUsername() + "\"}",
+                "User",
+                friendId.toString(),
+                friendId,
+                "USER",
+                requestId,
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+    }
+
+    /**
+     * Удалить пользователя из друзей
+     */
+    @Transactional
+    public void removeFriend(Long userId, Long friendId) {
+        UUID requestId = UUID.randomUUID();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Friend not found with id: " + friendId));
+
+        if (!user.isFriend(friend)) {
+            throw new RuntimeException("Users are not friends");
+        }
+
+        user.removeFriend(friend);
+        userRepository.save(user);
+        userRepository.save(friend);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.REMOVE_FRIEND,
+                "Remove Friend",
+                user,
+                true,
+                "User " + user.getUsername() + " removed " + friend.getUsername() + " from friends",
+                null,
+                "{\"friendId\": " + friendId + ", \"friendUsername\": \"" + friend.getUsername() + "\"}",
+                "User",
+                friendId.toString(),
+                friendId,
+                "USER",
+                requestId,
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+    }
+
+    /**
+     * Проверить, являются ли пользователи друзьями
+     */
+    public boolean areFriends(Long userId, Long friendId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Friend not found with id: " + friendId));
+
+        return user.isFriend(friend);
+    }
+
+    /**
+     * Получить список друзей пользователя
+     */
+    public Page<UserDTO> getFriends(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Получаем ID всех друзей
+        Set<Long> friendIds = user.getFriends().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        if (friendIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // Получаем страницу друзей
+        Page<User> friendsPage = userRepository.findAllByIdIn(friendIds, pageable);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.VIEW_FRIENDS,
+                "View Friends List",
+                user,
+                true,
+                "User " + user.getUsername() + " viewed friends list (" + friendsPage.getTotalElements() + " friends)",
+                null,
+                "{\"friendsCount\": " + friendsPage.getTotalElements() + "}",
+                null,
+                null,
+                null,
+                null,
+                UUID.randomUUID(),
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+
+        return friendsPage.map(userMapper::map);
+    }
+
+    /**
+     * Получить список общих друзей
+     */
+    public Page<UserDTO> getMutualFriends(Long userId, Long otherUserId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new RuntimeException("Other user not found with id: " + otherUserId));
+
+        Set<User> mutualFriends = user.getMutualFriends(otherUser);
+        Set<Long> mutualFriendIds = mutualFriends.stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        if (mutualFriendIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Page<User> mutualFriendsPage = userRepository.findAllByIdIn(mutualFriendIds, pageable);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.VIEW_MUTUAL_FRIENDS,
+                "View Mutual Friends",
+                user,
+                true,
+                "User " + user.getUsername() + " viewed mutual friends with " + otherUser.getUsername() +
+                        " (" + mutualFriendsPage.getTotalElements() + " mutual friends)",
+                null,
+                "{\"otherUserId\": " + otherUserId + ", \"otherUsername\": \"" + otherUser.getUsername() +
+                        "\", \"mutualFriendsCount\": " + mutualFriendsPage.getTotalElements() + "}",
+                "User",
+                otherUserId.toString(),
+                otherUserId,
+                "USER",
+                UUID.randomUUID(),
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+
+        return mutualFriendsPage.map(userMapper::map);
+    }
+
+    /**
+     * Поиск друзей по имени пользователя
+     */
+    public Page<UserDTO> searchFriends(Long userId, String searchQuery, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Получаем ID всех друзей
+        Set<Long> friendIds = user.getFriends().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        if (friendIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // Ищем друзей по подстроке среди ID друзей
+        Page<User> friendsPage = userRepository.findByIdInAndUsernameContainingIgnoreCase(
+                friendIds, searchQuery, pageable);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.SEARCH_FRIENDS,
+                "Search Friends",
+                user,
+                true,
+                "User " + user.getUsername() + " searched friends with query: " + searchQuery +
+                        " (" + friendsPage.getTotalElements() + " results)",
+                null,
+                "{\"searchQuery\": \"" + searchQuery + "\", \"resultsCount\": " + friendsPage.getTotalElements() + "}",
+                null,
+                null,
+                null,
+                null,
+                UUID.randomUUID(),
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+
+        return friendsPage.map(userMapper::map);
+    }
+
+    /**
+     * Получить количество друзей
+     */
+    public int getFriendsCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        return user.getFriendsCount();
+    }
+
+    /**
+     * Рекомендации друзей (пользователи, которые не являются друзьями)
+     */
+    public Page<UserDTO> getFriendSuggestions(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Получаем ID всех друзей и самого пользователя
+        Set<Long> excludedIds = user.getFriends().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+        excludedIds.add(userId);
+
+        // Получаем рекомендации (исключая друзей и самого пользователя)
+        Page<User> suggestionsPage = userRepository.findByIdNotIn(excludedIds, pageable);
+
+        // Логирование
+        activityLogService.logUserActivity(
+                ActionType.VIEW_FRIEND_SUGGESTIONS,
+                "View Friend Suggestions",
+                user,
+                true,
+                "User " + user.getUsername() + " viewed friend suggestions (" + suggestionsPage.getTotalElements() + " suggestions)",
+                null,
+                "{\"suggestionsCount\": " + suggestionsPage.getTotalElements() + "}",
+                null,
+                null,
+                null,
+                null,
+                UUID.randomUUID(),
+                requestContextHelper.getCurrentRequestIpAddress(),
+                requestContextHelper.getCurrentRequestUserAgent()
+        );
+
+        return suggestionsPage.map(userMapper::map);
+    }
+
 }

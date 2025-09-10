@@ -472,4 +472,5 @@ class UserActivityLogServiceTest {
         assertNotNull(transactional);
         assertTrue(transactional.readOnly());
     }
+
 }

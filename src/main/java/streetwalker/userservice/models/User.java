@@ -13,9 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /** Класс для хранения Профиля пользователя платформы
    * @author Siderea
@@ -55,7 +53,46 @@ public class User extends Profile implements UserDetails {
     @ManyToOne
     private Status status;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_friends",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "friend_id")
+    )
+    private Set<User> friends = new HashSet<>();
 
+    @ManyToMany(mappedBy = "friends")
+    private Set<User> friendOf = new HashSet<>();
+
+    // Методы для управления друзьями
+    public void addFriend(User friend) {
+        if (!this.equals(friend) && !this.friends.contains(friend)) {
+            this.friends.add(friend);
+            friend.getFriends().add(this);
+        }
+    }
+
+    public void removeFriend(User friend) {
+        this.friends.remove(friend);
+        friend.getFriends().remove(this);
+    }
+
+    public boolean isFriend(User user) {
+        return this.friends.contains(user);
+    }
+    public Set<User> getAllFriends() {
+        return new HashSet<>(this.friends);
+    }
+
+    public int getFriendsCount() {
+        return this.friends.size();
+    }
+
+    public Set<User> getMutualFriends(User otherUser) {
+        Set<User> mutualFriends = new HashSet<>(this.friends);
+        mutualFriends.retainAll(otherUser.getFriends());
+        return mutualFriends;
+    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));
