@@ -15,7 +15,9 @@ public class CommunityMembership {
 
     @ManyToOne
     private User user;
-
+    @ManyToOne
+    @JoinColumn(name = "community_profile_id") // Add this field
+    private CommunityProfile community_profile; // This matches the mappedBy reference
 
     @ManyToOne
     private CommunityRole role;
