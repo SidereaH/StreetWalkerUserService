@@ -1,5 +1,6 @@
 package streetwalker.userservice.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -12,21 +13,24 @@ import org.springframework.web.bind.annotation.*;
 import streetwalker.userservice.dto.*;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.services.UserService;
+import streetwalker.userservice.services.security.SecurityUtils;
 
 import java.util.UUID;
-
+@Slf4j
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    final UserService userService;
-
-    public UserController(UserService userService) {
+    private final UserService userService;
+    private final SecurityUtils securityUtils;
+    public UserController(UserService userService, SecurityUtils securityUtils) {
         this.userService = userService;
+        this.securityUtils = securityUtils;
     }
-
+    //переделать в возвращение dto
     @GetMapping
-    public ResponseEntity<Page<User>> getAllUsers(Pageable pageable) {
+    public ResponseEntity<Page<UserDTO>> getAllUsers(Pageable pageable) {
+        log.info("getAllUsers" + pageable);
         if(pageable != null) {
             return new ResponseEntity<>(userService.findAll(pageable), HttpStatus.OK);
         }
@@ -66,6 +70,11 @@ public class UserController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<UserDTO> update(@RequestBody @Validated UserUpdateDTO userData, @PathVariable Long id) {
+
+        if (!securityUtils.isCurrentUser(id)&& !securityUtils.isCurrentUserAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         UserDTO user;
         try {
             user = userService.update(userData, id);
@@ -97,6 +106,10 @@ public class UserController {
 
     @PostMapping("/{userId}/friends/{friendId}")
     public ResponseEntity<?> addFriend(@PathVariable Long userId, @PathVariable Long friendId) {
+        if (!securityUtils.isCurrentUser(userId)&& !securityUtils.isCurrentUserAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         try {
             userService.addFriend(userId, friendId);
             return new ResponseEntity<>("Friend added successfully", HttpStatus.OK);
@@ -107,6 +120,10 @@ public class UserController {
 
     @DeleteMapping("/{userId}/friends/{friendId}")
     public ResponseEntity<?> removeFriend(@PathVariable Long userId, @PathVariable Long friendId) {
+        if (!securityUtils.isCurrentUser(userId) && !securityUtils.isCurrentUserAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         try {
             userService.removeFriend(userId, friendId);
             return new ResponseEntity<>("Friend removed successfully", HttpStatus.OK);
@@ -215,6 +232,10 @@ public class UserController {
 
     @PostMapping("/{id}/password/reset")
     public ResponseEntity<?> createPasswordResetLink(@PathVariable Long id) {
+        if (!securityUtils.isCurrentUser(id) && !securityUtils.isCurrentUserAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         try {
             userService.createNewPassLinkAndSendToMail(id);
             return new ResponseEntity<>("Password reset link sent to email", HttpStatus.OK);
