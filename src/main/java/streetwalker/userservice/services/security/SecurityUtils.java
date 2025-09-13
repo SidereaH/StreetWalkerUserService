@@ -1,9 +1,12 @@
 package streetwalker.userservice.services.security;
 
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import streetwalker.userservice.models.User;
+
+import java.util.Objects;
 
 @Component
 public class SecurityUtils {
@@ -24,5 +27,8 @@ public class SecurityUtils {
     public boolean isCurrentUser(Long userId) {
         Long currentUserId = getCurrentUserId();
         return currentUserId != null && currentUserId.equals(userId);
+    }
+    public boolean isCurrentUserAdmin() {
+        return Objects.equals(getCurrentUser().getRole().getName(), "ADMIN");
     }
 }

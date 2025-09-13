@@ -4,10 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import streetwalker.userservice.config.TestSecurityConfig;
 import streetwalker.userservice.controllers.SecurityController;
 import streetwalker.userservice.dto.AuthResponse;
 import streetwalker.userservice.dto.SigninRequest;
@@ -18,8 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 @WebMvcTest(SecurityController.class)
+//@Import(TestSecurityConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
 class SecurityControllerTest {
 
@@ -52,7 +55,8 @@ class SecurityControllerTest {
                                   "phone": "79998887766",
                                   "password": "password"
                                 }
-                                """))
+                                """)
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.email").value("test@example.com"))
@@ -70,7 +74,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"username":"testuser","email":"test@example.com","phone":"79998887766","password":"password"}
-                                """))
+                                """) .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("User already exists with username: testuser"));
     }
@@ -85,7 +89,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"phone":"79998887766","password":"password"}
-                                """))
+                                """) .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("jwt-token"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
@@ -99,7 +103,7 @@ class SecurityControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"phone":"79998887766","password":"wrong"}
-                                """))
+                                """) .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Invalid credentials"));
     }
@@ -111,7 +115,7 @@ class SecurityControllerTest {
         when(userService.refresh("valid-token")).thenReturn(authResponse);
 
         mockMvc.perform(post("/auth/refresh")
-                        .param("refreshToken", "valid-token"))
+                        .param("refreshToken", "valid-token") .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-jwt"))
                 .andExpect(jsonPath("$.refreshToken").value("new-refresh"));
@@ -122,7 +126,7 @@ class SecurityControllerTest {
         when(userService.refresh("bad-token")).thenThrow(new RuntimeException("Invalid refresh token"));
 
         mockMvc.perform(post("/auth/refresh")
-                        .param("refreshToken", "bad-token"))
+                        .param("refreshToken", "bad-token") .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Invalid refresh token"));
     }
@@ -131,7 +135,7 @@ class SecurityControllerTest {
     @Test
     void logout_Success() throws Exception {
         mockMvc.perform(post("/auth/logout")
-                        .param("refreshToken", "valid-token"))
+                        .param("refreshToken", "valid-token") .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Logged out successfully"));
 
@@ -144,7 +148,7 @@ class SecurityControllerTest {
                 .when(userService).logout("bad-token");
 
         mockMvc.perform(post("/auth/logout")
-                        .param("refreshToken", "bad-token"))
+                        .param("refreshToken", "bad-token") .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("DB error"));
     }

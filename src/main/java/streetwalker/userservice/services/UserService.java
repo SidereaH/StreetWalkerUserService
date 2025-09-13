@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -52,8 +53,9 @@ public class UserService implements UserDetailsService {
         this.requestContextHelper = requestContextHelper;
     }
 
-    public Page<User> findAll(Pageable usersPageable) {
-        return userRepository.findAll(usersPageable);
+    public Page<UserDTO> findAll(Pageable usersPageable) {
+        List<UserDTO> users = userRepository.findAll(usersPageable).stream().map(userMapper::map).toList();
+        return new PageImpl<>(users, usersPageable, users.size());
     }
 
     public Optional<User> findUserById(Long id) {

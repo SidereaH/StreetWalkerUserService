@@ -43,7 +43,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // говорим Spring использовать UserService как UserDetailsService
     @Bean
     public UserDetailsService userDetailsService(UserService userService) {
         return userService;
@@ -71,7 +70,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth","/auth/**").permitAll()
                         .requestMatchers("/register", "/register/**", "/login", "/login/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated())
