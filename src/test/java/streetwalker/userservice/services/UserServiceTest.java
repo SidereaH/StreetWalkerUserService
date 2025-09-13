@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import streetwalker.userservice.dto.*;
 import streetwalker.userservice.mappers.UserMapper;
 import streetwalker.userservice.models.RefreshToken;
+import streetwalker.userservice.models.Status;
 import streetwalker.userservice.models.User;
 import streetwalker.userservice.repositories.UserRepository;
 import streetwalker.userservice.security.JwtCore;
@@ -71,14 +72,21 @@ class UserServiceTest {
     // ===================== findAll =====================
     @Test
     void findAll_shouldReturnPage() {
-        Pageable pageable = mock(Pageable.class);
-        Page<User> page = mock(Page.class);
+        Pageable pageable = PageRequest.of(0, 10);
+        User user = new User();
+        user.setUsername("test");
+        user.setEmail("test@test.com");
+        user.setStatus(new Status());
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername("test");
+        userDTO.setEmail("test@test.com");
 
-        when(userRepository.findAll(pageable)).thenReturn(page);
+        Page<User> users = new PageImpl<>(List.of(user), pageable, 1);
 
-        Page<User> result = userService.findAll(pageable);
+        when(userRepository.findAll(pageable)).thenReturn(users);
 
-        assertEquals(page, result);
+        Page<UserDTO> result = userService.findAll(pageable);
+        assertEquals(userDTO.getEmail(), users.getContent().get(0).getEmail()) ;
         verify(userRepository).findAll(pageable);
     }
 

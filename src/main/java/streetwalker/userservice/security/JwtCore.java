@@ -29,6 +29,7 @@ public class JwtCore {
         User userDetails = (User) authentication.getPrincipal();
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("id", userDetails.getId())
                 .claim("email", userDetails.getEmail())
                 .claim("role", userDetails.getRole())
                 .setIssuedAt(new Date())
@@ -40,6 +41,7 @@ public class JwtCore {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
         return Jwts.builder()
                 .setSubject(user.getUsername())
+                .claim("id", user.getId())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole())
                 .setIssuedAt(new Date())
